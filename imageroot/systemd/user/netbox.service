@@ -10,8 +10,8 @@
 
 [Unit]
 Description=Podman netbox.service
-Requires=postgresql-app.service netbox-app.service
-Before=postgresql-app.service netbox-app.service
+Requires=postgresql-app.service redis-app.service redis-cache-app.service netbox-app.service
+Before=postgresql-app.service redis-app.service redis-cache-app.service netbox-app.service
 
 [Service]
 Environment=PODMAN_SYSTEMD_UNIT=%n

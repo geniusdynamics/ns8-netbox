@@ -1,0 +1,34 @@
+#
+# Copyright (C) 2022 Nethesis S.r.l.
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+
+[Unit]
+Description=Podman  redis-cache-app.service
+BindsTo=netbox.service
+After=netbox.service postgresql-app.service
+
+[Service]
+Environment=PODMAN_SYSTEMD_UNIT=%n
+EnvironmentFile=%S/state/environment
+EnvironmentFile=-%S/state/smarthost.env
+WorkingDirectory=%S/state
+Restart=always
+TimeoutStopSec=70
+ExecStartPre=/bin/mkdir -p config
+ExecStartPre=/bin/rm -f %t/redis-cache-app.pid %t/redis-cache-app.ctr-id
+ExecStartPre=-runagent discover-smarthost
+ExecStart=/usr/bin/podman run --conmon-pidfile %t/redis-cache-app.pid \
+    --cidfile %t/redis-cache-app.ctr-id --cgroups=no-conmon \
+    --pod-id-file %t/netbox.pod-id --replace -d --name  redis-cache-app \
+    --volume redis-data:/data \
+    ${REDIS_IMAGE} --appendonly yes
+ExecStop=/usr/bin/podman stop --ignore --cidfile %t/redis-cache-app.ctr-id -t 10
+ExecReload=/usr/bin/podman kill -s HUP redis-cache-app
+SyslogIdentifier=%u
+ExecStopPost=/usr/bin/podman rm --ignore -f --cidfile %t/redis-cache-app.ctr-id
+PIDFile=%t/redis-cache-app.pid
+Type=forking
+
+[Install]
+WantedBy=default.target

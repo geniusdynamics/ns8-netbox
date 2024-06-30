@@ -21,8 +21,8 @@ ExecStartPre=-runagent discover-smarthost
 ExecStart=/usr/bin/podman run --conmon-pidfile %t/redis-cache-app.pid \
     --cidfile %t/redis-cache-app.ctr-id --cgroups=no-conmon \
     --pod-id-file %t/netbox.pod-id --replace -d --name  redis-cache-app \
-    --volume redis-data:/data \
-    ${REDIS_IMAGE} --appendonly yes
+    --volume redis-cache-data:/data \
+    ${REDIS_IMAGE} --appendonly yes --requirepass ${REDIS_CACHE_PASSWORD}
 ExecStop=/usr/bin/podman stop --ignore --cidfile %t/redis-cache-app.ctr-id -t 10
 ExecReload=/usr/bin/podman kill -s HUP redis-cache-app
 SyslogIdentifier=%u

@@ -8,6 +8,7 @@
 import json
 import sys
 import agent
+import secrets
 
 # Try to parse the stdin as JSON.
 # If parsing fails, output everything to stderr
@@ -33,6 +34,29 @@ postgres_config = {
 }
 # write it to .config/state/postgres.env
 agent.write_envfile(postgres_config, "postgres.env")
+
+# Write Email configuration to .config/state/email.env
+# SMTP Configuration
+rdb = agent.redis_connect(use_replica=True)
+smtp_settings = agent.get_smarthost_settings(rdb)
+## Set the default values
+SMTP_HOST=smtp_settings['host']
+# OPTIONAL: Defines the port to use for sending emails.
+SMTP_PORT=smtp_settings['port']
+# OPTIONAL: Defines the username to use with the SMTP server.
+SMTP_USERNAME=smtp_settings['username']
+# OPTIONAL: Defines the password to use with the SMTP server.
+SMTP_PASSWORD=smtp_settings['password']
+# REQUIRED: Defines the email address to use as the from address.
+SMTP_ENCRYPTION= True if smtp_settings['tls_verify'] else False
+
+email_config = {
+   "EMAIL_HOST": SMTP_HOST,
+    "EMAIL_PORT": SMTP_PORT,
+    "EMAIL_USERNAME": SMTP_USERNAME,
+    "EMAIL_PASSWORD": SMTP_PASSWORD,
+    "EMAIL_USE_TLS": SMTP_ENCRYPTION,
+}
 
 # CORS_ORIGIN_ALLOW_ALL=True
 # DB_HOST=postgres
@@ -69,45 +93,55 @@ agent.write_envfile(postgres_config, "postgres.env")
 # SKIP_SUPERUSER=true
 # WEBHOOKS_ENABLED=true
 
+
 # we write it to .config/state/netbox.env
 
+CORS_ORIGIN_ALLOW_ALL = data.get("CORS_ORIGIN_ALLOW_ALL", "True")
+
+REDIS_CACHE_DATABASE = data.get("REDIS_CACHE_DATABASE", "1")
+REDIS_CACHE_HOST = data.get("REDIS_CACHE_HOST", "redis-cache-app")
+REDIS_CACHE_INSECURE_SKIP_TLS_VERIFY = data.get("REDIS_CACHE_INSECURE_SKIP_TLS_VERIFY", "False")
+REDIS_CACHE_PASSWORD = data.get("REDIS_CACHE_PASSWORD", "t4Ph722qJ5QHeQ1qfu36")
+REDIS_CACHE_SSL = data.get("REDIS_CACHE_SSL", "False")
+
+REDIS_DATABASE = data.get("REDIS_DATABASE", "0")
+REDIS_HOST = data.get("REDIS_HOST", "redis-app")
+REDIS_INSECURE_SKIP_TLS_VERIFY = data.get("REDIS_INSECURE_SKIP_TLS_VERIFY", "False")
+REDIS_PASSWORD = data.get("REDIS_PASSWORD", "H733Kdjndks81")
+REDIS_SSL = data.get("REDIS_SSL", "False")
+
+SKIP_SUPERUSER = data.get("SKIP_SUPERUSER", "True")
+WEBHOOKS_ENABLED = data.get("WEBHOOKS_ENABLED", "True")
+secret = secrets.token_hex(32)
+SECRET_KEY=secret
 
 net_box_config = {
-    "CORS_ORIGIN_ALLOW_ALL": data.get("CORS_ORIGIN_ALLOW_ALL", "True"),
-    "DB_HOST": data.get("DB_HOST", "postgres"),
-    "DB_NAME": data.get("DB_NAME", "netbox"),
-    "DB_PASSWORD": data.get("DB_PASSWORD", "J5brHrAXFLQSif0K"),
-    "DB_USER": data.get("DB_USER", "netbox"),
-    "EMAIL_FROM": data.get("EMAIL_FROM"),
-    "EMAIL_PASSWORD": data.get("EMAIL_PASSWORD"),
-    "EMAIL_PORT": data.get("EMAIL_PORT", "25"),
-    "EMAIL_SERVER": data.get("EMAIL_SERVER", "localhost"),
-    "EMAIL_SSL_CERTFILE": data.get("EMAIL_SSL_CERTFILE"),
-    "EMAIL_SSL_KEYFILE": data.get("EMAIL_SSL_KEYFILE"),
-    "EMAIL_TIMEOUT": data.get("EMAIL_TIMEOUT", "5"),
-    "EMAIL_USERNAME": data.get("EMAIL_USERNAME", "netbox"),
-    "EMAIL_USE_SSL": data.get("EMAIL_USE_SSL", "false"),
-    "EMAIL_USE_TLS": data.get("EMAIL_USE_TLS", "false"),
-    "GRAPHQL_ENABLED": data.get("GRAPHQL_ENABLED", "true"),
-    "HOUSEKEEPING_INTERVAL": data.get("HOUSEKEEPING_INTERVAL", "86400"),
-    "MEDIA_ROOT": data.get("MEDIA_ROOT", "/opt/netbox/netbox/media"),
-    "METRICS_ENABLED": data.get("METRICS_ENABLED", "false"),
-    "REDIS_CACHE_DATABASE": data.get("REDIS_CACHE_DATABASE", "1"),
-    "REDIS_CACHE_HOST": data.get("REDIS_CACHE_HOST", "redis-cache"),
-    "REDIS_CACHE_INSECURE_SKIP_TLS_VERIFY": data.get("REDIS_CACHE_INSECURE_SKIP_TLS_VERIFY", "false"),
-    "REDIS_CACHE_PASSWORD": data.get("REDIS_CACHE_PASSWORD", "t4Ph722qJ5QHeQ1qfu36"),
-    "REDIS_CACHE_SSL": data.get("REDIS_CACHE_SSL", "false"),
-    "REDIS_DATABASE": data.get("REDIS_DATABASE", "0"),
-    "REDIS_HOST": data.get("REDIS_HOST", "redis"),
-    "REDIS_INSECURE_SKIP_TLS_VERIFY": data.get("REDIS_INSECURE_SKIP_TLS_VERIFY", "false"),
-    "REDIS_PASSWORD": data.get("REDIS_PASSWORD", "H733Kdjndks81"),
-    "REDIS_SSL": data.get("REDIS_SSL", "false"),
-    "RELEASE_CHECK_URL": data.get("RELEASE_CHECK_URL", "https://api.github.com/repos/netbox-community/netbox/releases"),
-    "SECRET_KEY": data.get("SECRET_KEY", "r(m)9nLGnz$(_q3N4z1k(EFsMCjjjzx08x9VhNVcfd%6RF#r!6DE@+V5Zk2X"),
-    "SKIP_SUPERUSER": data.get("SKIP_SUPERUSER", "true"),
-    "WEBHOOKS_ENABLED": data.get("WEBHOOKS_ENABLED", "true")
+    "CORS_ORIGIN_ALLOW_ALL": CORS_ORIGIN_ALLOW_ALL,
+    "DB_HOST": POSTGRES_HOST,
+    "DB_NAME": POSTGRES_DB,
+    "DB_PASSWORD": POSTGRES_PASSWORD,
+    "DB_USER": POSTGRES_USER,
+    "EMAIL_FROM": SMTP_USERNAME,
+    "EMAIL_PASSWORD": SMTP_PASSWORD,
+    "EMAIL_PORT": SMTP_PORT,
+    "EMAIL_SERVER": SMTP_HOST,
+    "EMAIL_USERNAME": SMTP_USERNAME,
+    "EMAIL_USE_TLS": SMTP_ENCRYPTION,
+    "GRAPHQL_ENABLED": True,
+    "REDIS_CACHE_DATABASE": REDIS_CACHE_DATABASE,
+    "REDIS_CACHE_HOST": REDIS_CACHE_HOST,
+    "REDIS_CACHE_PASSWORD": REDIS_CACHE_PASSWORD,
+    "REDIS_DATABASE": REDIS_DATABASE,
+    "REDIS_HOST": REDIS_HOST,
+    "REDIS_PASSWORD": REDIS_PASSWORD,
+    "SECRET_KEY": SECRET_KEY,
+    "SKIP_SUPERUSER": SKIP_SUPERUSER,
+    "WEBHOOKS_ENABLED": WEBHOOKS_ENABLED
 }
+agent.write_envfile("netbox.env", net_box_config)
 
+agent.write_env("REDIS_CACHE_PASSWORD", REDIS_CACHE_PASSWORD)
+agent.write_env("REDIS_PASSWORD", REDIS_PASSWORD)
 
 # just before starting systemd unit
-#agent.dump_env()
+agent.dump_env()

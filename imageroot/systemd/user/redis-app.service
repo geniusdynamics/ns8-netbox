@@ -22,7 +22,7 @@ ExecStart=/usr/bin/podman run --conmon-pidfile %t/redis-app.pid \
     --cidfile %t/redis-app.ctr-id --cgroups=no-conmon \
     --pod-id-file %t/netbox.pod-id --replace -d --name  redis-app \
     --volume redis-data:/data \
-    ${REDIS_IMAGE} --appendonly yes
+    ${REDIS_IMAGE} --appendonly yes --requirepass ${REDIS_PASSWORD} --bind
 ExecStop=/usr/bin/podman stop --ignore --cidfile %t/redis-app.ctr-id -t 10
 ExecReload=/usr/bin/podman kill -s HUP redis-app
 SyslogIdentifier=%u

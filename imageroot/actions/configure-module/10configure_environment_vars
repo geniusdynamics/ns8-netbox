@@ -15,19 +15,99 @@ data = json.load(sys.stdin)
 
 #This is specific to you module, so you need to change it accordingly.
 # we read a json stdin {"vars1":true, "var2":"foo", "vars3": 3} and we writ it to .config/state/environment
-# Upper case to set environment variable and minor case to read from stdin
 
-# this values must exists in the json stdin
-# agent.set_env("MAIL_SERVER", data["mail_server"])
-# agent.set_env("LDAP_DOMAIN", data["ldap_domain"])
-
-# you can add default values for the following variables
-# agent.set_env("MAIL_DOMAIN",data.get("mail_domain",""))
-# agent.set_env("WOWORKERSCOUNT",data.get("workers_count",3))
-# agent.set_env("AUXILIARYACCOUNT",data.get("auxiliary_account",True))
-# agent.set_env("ACTIVESYNC",data.get("activesync",False))
+# write Postgres configuration to .config/state/postgres.env
+POSTGRES_DB = data.get("POSTGRES_DB", "netbox")
+POSTGRES_USER = data.get("POSTGRES_USER", "netbox")
+POSTGRES_PASSWORD = data.get("POSTGRES_PASSWORD", "J5brHrAXFLQSif0K")
+POSTGRES_HOST = data.get("POSTGRES_HOST", "postgres")
+POSTGRES_PORT = data.get("POSTGRES_PORT", "5432")
 
 
-# Make sure everything is saved inside the environment file
+postgres_config = {
+    "POSTGRES_DB":POSTGRES_DB,
+    "POSTGRES_USER": POSTGRES_USER,
+    "POSTGRES_PASSWORD": POSTGRES_PASSWORD,
+    "POSTGRES_HOST": POSTGRES_HOST,
+    "POSTGRES_PORT": POSTGRES_PORT
+}
+# write it to .config/state/postgres.env
+agent.write_envfile(postgres_config, "postgres.env")
+
+# CORS_ORIGIN_ALLOW_ALL=True
+# DB_HOST=postgres
+# DB_NAME=netbox
+# DB_PASSWORD=J5brHrAXFLQSif0K
+# DB_USER=netbox
+# EMAIL_FROM=netbox@bar.com
+# EMAIL_PASSWORD=
+# EMAIL_PORT=25
+# EMAIL_SERVER=localhost
+# EMAIL_SSL_CERTFILE=
+# EMAIL_SSL_KEYFILE=
+# EMAIL_TIMEOUT=5
+# EMAIL_USERNAME=netbox
+# # EMAIL_USE_SSL and EMAIL_USE_TLS are mutually exclusive, i.e. they can't both be `true`!
+# EMAIL_USE_SSL=false
+# EMAIL_USE_TLS=false
+# GRAPHQL_ENABLED=true
+# HOUSEKEEPING_INTERVAL=86400
+# MEDIA_ROOT=/opt/netbox/netbox/media
+# METRICS_ENABLED=false
+# REDIS_CACHE_DATABASE=1
+# REDIS_CACHE_HOST=redis-cache
+# REDIS_CACHE_INSECURE_SKIP_TLS_VERIFY=false
+# REDIS_CACHE_PASSWORD=t4Ph722qJ5QHeQ1qfu36
+# REDIS_CACHE_SSL=false
+# REDIS_DATABASE=0
+# REDIS_HOST=redis
+# REDIS_INSECURE_SKIP_TLS_VERIFY=false
+# REDIS_PASSWORD=H733Kdjndks81
+# REDIS_SSL=false
+# RELEASE_CHECK_URL=https://api.github.com/repos/netbox-community/netbox/releases
+# SECRET_KEY='r(m)9nLGnz$(_q3N4z1k(EFsMCjjjzx08x9VhNVcfd%6RF#r!6DE@+V5Zk2X'
+# SKIP_SUPERUSER=true
+# WEBHOOKS_ENABLED=true
+
+# we write it to .config/state/netbox.env
+
+
+net_box_config = {
+    "CORS_ORIGIN_ALLOW_ALL": data.get("CORS_ORIGIN_ALLOW_ALL", "True"),
+    "DB_HOST": data.get("DB_HOST", "postgres"),
+    "DB_NAME": data.get("DB_NAME", "netbox"),
+    "DB_PASSWORD": data.get("DB_PASSWORD", "J5brHrAXFLQSif0K"),
+    "DB_USER": data.get("DB_USER", "netbox"),
+    "EMAIL_FROM": data.get("EMAIL_FROM"),
+    "EMAIL_PASSWORD": data.get("EMAIL_PASSWORD"),
+    "EMAIL_PORT": data.get("EMAIL_PORT", "25"),
+    "EMAIL_SERVER": data.get("EMAIL_SERVER", "localhost"),
+    "EMAIL_SSL_CERTFILE": data.get("EMAIL_SSL_CERTFILE"),
+    "EMAIL_SSL_KEYFILE": data.get("EMAIL_SSL_KEYFILE"),
+    "EMAIL_TIMEOUT": data.get("EMAIL_TIMEOUT", "5"),
+    "EMAIL_USERNAME": data.get("EMAIL_USERNAME", "netbox"),
+    "EMAIL_USE_SSL": data.get("EMAIL_USE_SSL", "false"),
+    "EMAIL_USE_TLS": data.get("EMAIL_USE_TLS", "false"),
+    "GRAPHQL_ENABLED": data.get("GRAPHQL_ENABLED", "true"),
+    "HOUSEKEEPING_INTERVAL": data.get("HOUSEKEEPING_INTERVAL", "86400"),
+    "MEDIA_ROOT": data.get("MEDIA_ROOT", "/opt/netbox/netbox/media"),
+    "METRICS_ENABLED": data.get("METRICS_ENABLED", "false"),
+    "REDIS_CACHE_DATABASE": data.get("REDIS_CACHE_DATABASE", "1"),
+    "REDIS_CACHE_HOST": data.get("REDIS_CACHE_HOST", "redis-cache"),
+    "REDIS_CACHE_INSECURE_SKIP_TLS_VERIFY": data.get("REDIS_CACHE_INSECURE_SKIP_TLS_VERIFY", "false"),
+    "REDIS_CACHE_PASSWORD": data.get("REDIS_CACHE_PASSWORD", "t4Ph722qJ5QHeQ1qfu36"),
+    "REDIS_CACHE_SSL": data.get("REDIS_CACHE_SSL", "false"),
+    "REDIS_DATABASE": data.get("REDIS_DATABASE", "0"),
+    "REDIS_HOST": data.get("REDIS_HOST", "redis"),
+    "REDIS_INSECURE_SKIP_TLS_VERIFY": data.get("REDIS_INSECURE_SKIP_TLS_VERIFY", "false"),
+    "REDIS_PASSWORD": data.get("REDIS_PASSWORD", "H733Kdjndks81"),
+    "REDIS_SSL": data.get("REDIS_SSL", "false"),
+    "RELEASE_CHECK_URL": data.get("RELEASE_CHECK_URL", "https://api.github.com/repos/netbox-community/netbox/releases"),
+    "SECRET_KEY": data.get("SECRET_KEY", "r(m)9nLGnz$(_q3N4z1k(EFsMCjjjzx08x9VhNVcfd%6RF#r!6DE@+V5Zk2X"),
+    "SKIP_SUPERUSER": data.get("SKIP_SUPERUSER", "true"),
+    "WEBHOOKS_ENABLED": data.get("WEBHOOKS_ENABLED", "true")
+}
+
+
 # just before starting systemd unit
 #agent.dump_env()

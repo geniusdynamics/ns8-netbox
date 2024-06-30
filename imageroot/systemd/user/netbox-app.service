@@ -21,11 +21,12 @@ ExecStartPre=-runagent discover-smarthost
 ExecStart=/usr/bin/podman run --conmon-pidfile %t/netbox-app.pid \
     --cidfile %t/netbox-app.ctr-id --cgroups=no-conmon \
     --pod-id-file %t/netbox.pod-id --replace -d --name  netbox-app \
-    --volume netbox-app:/var/www/html/:Z \
-    --volume ./config:/tmp:Z \
-    --env=NGINX_* \
-    --env 'CONFIG_DATABASE_URI="postgresql://postgres:Nethesis,1234@127.0.0.1:5432/netbox"' \
-    ${NGINX_IMAGE}
+    --env-file=%S/state/netbox-app.env \
+    --volume netbox-media-files:/opt/netbox/netbox/media:Z \
+    --volume netbox-reports-files:/opt/netbox/netbox/reports:Z \
+    --volume netbox-scripts-files:/opt/netbox/netbox/scripts:Z \
+    --volume config:/etc/netbox/config:z \
+    ${NETBOX_IMAGE}
 ExecStop=/usr/bin/podman stop --ignore --cidfile %t/netbox-app.ctr-id -t 10
 ExecReload=/usr/bin/podman kill -s HUP netbox-app
 SyslogIdentifier=%u

@@ -1,7 +1,7 @@
 {
-  "name": "kickstart",
+  "name": "netbox",
   "description": {
-    "en": "My kickstart module"
+    "en": "My netbox module"
   },
   "categories": [],
   "authors": [
@@ -11,9 +11,9 @@
     }
   ],
   "docs": {
-    "documentation_url": "https://docs.kickstart.com/",
+    "documentation_url": "https://docs.netbox.com/",
     "bug_url": "https://github.com/NethServer/dev",
-    "code_url": "https://github.com/author/ns8-kickstart"
+    "code_url": "https://github.com/author/ns8-netbox"
   },
-  "source": "ghcr.io/nethserver/kickstart"
+  "source": "ghcr.io/nethserver/netbox"
 }

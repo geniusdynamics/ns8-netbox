@@ -33,7 +33,7 @@ postgres_config = {
     "POSTGRES_PORT": POSTGRES_PORT
 }
 # write it to .config/state/postgres.env
-agent.write_envfile(postgres_config, "postgres.env")
+agent.write_envfile("postgres.env", postgres_config)
 
 # Write Email configuration to .config/state/email.env
 # SMTP Configuration
@@ -112,8 +112,7 @@ REDIS_SSL = data.get("REDIS_SSL", "False")
 
 SKIP_SUPERUSER = data.get("SKIP_SUPERUSER", "True")
 WEBHOOKS_ENABLED = data.get("WEBHOOKS_ENABLED", "True")
-secret = secrets.token_hex(32)
-SECRET_KEY=secret
+SECRET_KEY = secrets.token_hex(32)
 
 net_box_config = {
     "CORS_ORIGIN_ALLOW_ALL": CORS_ORIGIN_ALLOW_ALL,

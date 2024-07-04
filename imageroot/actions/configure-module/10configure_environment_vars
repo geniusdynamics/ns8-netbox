@@ -139,8 +139,8 @@ net_box_config = {
 }
 agent.write_envfile("netbox.env", net_box_config)
 
-agent.write_env("REDIS_CACHE_PASSWORD", REDIS_CACHE_PASSWORD)
-agent.write_env("REDIS_PASSWORD", REDIS_PASSWORD)
+agent.set_env("REDIS_CACHE_PASSWORD", REDIS_CACHE_PASSWORD)
+agent.set_env("REDIS_PASSWORD", REDIS_PASSWORD)
 
 # just before starting systemd unit
 agent.dump_env()

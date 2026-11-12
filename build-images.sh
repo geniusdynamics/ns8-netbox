@@ -49,7 +49,7 @@ buildah config --entrypoint=/ \
     --label="org.nethserver.authorizations=traefik@node:routeadm" \
     --label="org.nethserver.tcp-ports-demand=1" \
     --label="org.nethserver.rootfull=0" \
-    --label="org.nethserver.images=docker.io/postgres:16-alpine docker.io/netboxcommunity/netbox:v4.0-2.9.1 docker.io/redis:7-alpine" \
+    --label="org.nethserver.images=docker.io/postgres:16.16-alpine3.24 docker.io/netboxcommunity/netbox:v4.0.11-2.9.1 docker.io/redis:7.4.12-alpine3.22" \
     "${container}"
 # Commit the image
 buildah commit "${container}" "${repobase}/${reponame}"

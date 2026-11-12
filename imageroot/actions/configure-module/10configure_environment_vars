@@ -38,7 +38,6 @@ agent.write_envfile("postgres.env", postgres_config)
 # Write Email configuration to .config/state/email.env
 # SMTP Configuration
 rdb = agent.redis_connect(use_replica=True)
-smtp_settings = agent.get_smarthost_settings(rdb)
 ## Set the default values
 SMTP_HOST=smtp_settings['host']
 # OPTIONAL: Defines the port to use for sending emails.

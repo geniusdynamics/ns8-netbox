@@ -8,4 +8,4 @@
 set -e
 
 echo "Dumping netbox postgres database"
-podman exec postgresql-app pg_dump -U postgres --format=c  netbox > netbox.pg_dump
+podman exec postgresql-app pg_dump -U netbox --format=c netbox > netbox.pg_dump

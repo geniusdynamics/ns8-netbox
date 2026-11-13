@@ -50,7 +50,7 @@ buildah config --entrypoint=/ \
     --label="org.nethserver.tcp-ports-demand=1" \
     --label="org.nethserver.rootfull=0" \
     --label="org.nethserver.min-core=3.0.0" \
-    --label="org.nethserver.images=docker.io/postgres:18.7-alpine3.24 docker.io/netboxcommunity/netbox:v4.0.11-2.9.1 docker.io/redis:8.10.3-alpine3.23" \
+    --label="org.nethserver.images=docker.io/postgres:18.7-alpine3.24 docker.io/netboxcommunity/netbox:v4.7.5-5.1.1 docker.io/redis:8.10.3-alpine3.23" \
     "${container}"
 # Commit the image
 buildah commit "${container}" "${repobase}/${reponame}"

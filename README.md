@@ -1,5 +1,7 @@
 # ns8-netbox
 
+NetBox is a source of truth for network infrastructure, with IP address management, racks, devices and circuits.
+
 Module id: `netbox`. Images are pinned in `build-images.sh` and updated through reviewed changes.
 
 ## Install
@@ -37,8 +39,10 @@ EOF
 | Image | Version |
 |---|---|
 | `docker.io/postgres` | `18.7-alpine3.24` |
-| `docker.io/netboxcommunity/netbox` | `v4.0.11-2.9.1` |
+| `docker.io/netboxcommunity/netbox` | `v4.7.5-5.1.1` |
 | `docker.io/redis` | `8.10.3-alpine3.23` |
+
+Requires NS8 core `3.0.0` or newer.
 
 ## Network and access
 
@@ -50,12 +54,16 @@ EOF
 
 The following paths are included in the NS8 backup (`imageroot/etc/state-include.conf`):
 
-- `state/netbox.sql`
-- `volumes/netbox-app`
+- `state/passwords.env`
+- `state/netbox.pg_dump`
+- `volumes/netbox-media-files`
+- `volumes/netbox-reports-files`
+- `volumes/netbox-scripts-files`
 
 ## Services
 
 - `netbox-app.service`
+- `netbox-worker.service`
 - `netbox.service`
 - `postgresql-app.service`
 - `redis-app.service`
@@ -85,37 +93,6 @@ Continuous integration:
 The suite installs the module, configures a host name, checks that the web application answers through Traefik, takes UI screenshots and removes the module.
 
 Run it locally with the NS8 standard infrastructure described in the [ns8-github-actions README](https://github.com/NethServer/ns8-github-actions/blob/v1/README.md#running-tests-locally).
-
-## Open items
-
-Found by the NS8 module standards check. These must be resolved before a stable release:
-
-- The module description is still the template text: write a description of at least 60 characters in ui/public/metadata.json
-- tests/netbox.robot generated from template: set real configure payload and URL check
-- metadata: documentation_url is a placeholder
-- metadata: categories empty (use standard categories)
-- metadata: description.en needs >= 60 real chars (+ it translation)
-- postgresql-app.service: uses %S/state, kickstart uses %E/state
-- netbox-app.service: uses %S/state, kickstart uses %E/state
-- redis-cache-app.service: uses %S/state, kickstart uses %E/state
-- redis-app.service: uses %S/state, kickstart uses %E/state
-- netbox.service: uses %S/state, kickstart uses %E/state
-- discover-smarthost still present: remove if the app does not use SMTP
-- secrets passed through agent.set_env(): move to state/passwords.env
-- README still has the template boilerplate
-- postgresql-app.service: %S/state changed to %E/state (review the bind mounts that remain)
-- netbox-app.service: %S/state changed to %E/state (review the bind mounts that remain)
-- redis-cache-app.service: %S/state changed to %E/state (review the bind mounts that remain)
-- redis-app.service: %S/state changed to %E/state (review the bind mounts that remain)
-- netbox.service: %S/state changed to %E/state (review the bind mounts that remain)
-- imageroot/actions/configure-module/80start_services: smarthost lines removed, check the unit still starts
-- imageroot/actions/configure-module/10configure_environment_vars: smarthost lines removed, check the unit still starts
-- imageroot/systemd/user/netbox-app.service: smarthost lines removed, check the unit still starts
-- imageroot/systemd/user/redis-cache-app.service: smarthost lines removed, check the unit still starts
-- imageroot/systemd/user/redis-app.service: smarthost lines removed, check the unit still starts
-- NETBOX_IMAGE is used by the module but no image in the label provides it: leftover from the template?
-- POSTGRES_IMAGE is used by the module but no image in the label provides it: leftover from the template?
-- REDIS_IMAGE is used by the module but no image in the label provides it: leftover from the template?
 
 ## Upstream
 

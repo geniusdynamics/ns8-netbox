@@ -8,10 +8,15 @@
 set -e -o pipefail
 exec 1>&2 # Redirect any output to the journal (stderr)
 
+# The backup holds passwords.env: restore the database with the same password
+# shellcheck disable=SC1091
+source passwords.env
+printf "POSTGRES_DB=netbox\nPOSTGRES_USER=netbox\nTZ=UTC\n" > postgres.env
+
 mkdir -vp restore
 cat - >restore/netbox_restore.sh <<'EOS'
 # Read dump file from standard input:
-pg_restore --no-owner --no-privileges -U postgres -d netbox
+pg_restore --no-owner --no-privileges -U netbox -d netbox
 ec=$?
 docker_temp_server_stop
 exit $ec
@@ -25,12 +30,10 @@ podman run \
     --interactive \
     --network=none \
     --volume=./restore:/docker-entrypoint-initdb.d/:Z \
-    --volume=postgres-data:/var/lib/postgresql/data:Z \
+    --volume=postgres-data:/var/lib/postgresql:Z \
     --replace --name=restore_db \
-    --env POSTGRES_USER=postgres \
-    --env POSTGRES_PASSWORD=Nethesis,1234 \
-    --env POSTGRES_DB=netbox \
-    --env TZ=UTC \
+    --env-file=postgres.env \
+    --env POSTGRES_PASSWORD="${NETBOX_DB_PASSWORD}" \
     "${POSTGRES_IMAGE}" < netbox.pg_dump
 
 # If the restore is successful, clean up:

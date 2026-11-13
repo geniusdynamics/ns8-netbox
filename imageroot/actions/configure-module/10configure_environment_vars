@@ -1,146 +1,64 @@
 #!/usr/bin/env python3
 
 #
-# Copyright (C) 2022 Nethesis S.r.l.
+# Copyright (C) 2026 Genius Dynamics
 # SPDX-License-Identifier: GPL-3.0-or-later
 #
 
 import json
+import os
 import sys
 import agent
-import secrets
 
-# Try to parse the stdin as JSON.
-# If parsing fails, output everything to stderr
-data = json.load(sys.stdin)
+request = json.load(sys.stdin)
+host = request["host"]
 
-#This is specific to you module, so you need to change it accordingly.
-# we read a json stdin {"vars1":true, "var2":"foo", "vars3": 3} and we writ it to .config/state/environment
+# One TCP port: the NetBox web server (port 8080 in the pod)
+agent.set_env("TCP_PORT", os.environ["TCP_PORTS"].split(",")[0])
 
-# write Postgres configuration to .config/state/postgres.env
-POSTGRES_DB = data.get("POSTGRES_DB", "netbox")
-POSTGRES_USER = data.get("POSTGRES_USER", "netbox")
-POSTGRES_PASSWORD = data.get("POSTGRES_PASSWORD", "J5brHrAXFLQSif0K")
-POSTGRES_HOST = data.get("POSTGRES_HOST", "postgres")
-POSTGRES_PORT = data.get("POSTGRES_PORT", "5432")
-
-
-postgres_config = {
-    "POSTGRES_DB":POSTGRES_DB,
-    "POSTGRES_USER": POSTGRES_USER,
-    "POSTGRES_PASSWORD": POSTGRES_PASSWORD,
-    "POSTGRES_HOST": POSTGRES_HOST,
-    "POSTGRES_PORT": POSTGRES_PORT
-}
-# write it to .config/state/postgres.env
-agent.write_envfile("postgres.env", postgres_config)
-
-# Write Email configuration to .config/state/email.env
-# SMTP Configuration
+# Mail goes through the cluster smarthost, when one is configured
 rdb = agent.redis_connect(use_replica=True)
-smtp_settings = agent.get_smarthost_settings(rdb)
-## Set the default values
-SMTP_HOST=smtp_settings['host']
-# OPTIONAL: Defines the port to use for sending emails.
-SMTP_PORT=smtp_settings['port']
-# OPTIONAL: Defines the username to use with the SMTP server.
-SMTP_USERNAME=smtp_settings['username']
-# OPTIONAL: Defines the password to use with the SMTP server.
-SMTP_PASSWORD=smtp_settings['password']
-# REQUIRED: Defines the email address to use as the from address.
-SMTP_ENCRYPTION= True if smtp_settings['tls_verify'] else False
+smtp = agent.get_smarthost_settings(rdb)
+mail = {}
+if smtp.get("enabled") and smtp.get("host"):
+    mail = {
+        "EMAIL_SERVER": smtp["host"],
+        "EMAIL_PORT": smtp["port"],
+        "EMAIL_USERNAME": smtp["username"],
+        "EMAIL_FROM": smtp["username"] or f"netbox@{host}",
+        "EMAIL_USE_TLS": "true" if smtp.get("encrypt_smtp") == "starttls" else "false",
+        "EMAIL_USE_SSL": "true" if smtp.get("encrypt_smtp") == "tls" else "false",
+    }
 
-email_config = {
-   "EMAIL_HOST": SMTP_HOST,
-    "EMAIL_PORT": SMTP_PORT,
-    "EMAIL_USERNAME": SMTP_USERNAME,
-    "EMAIL_PASSWORD": SMTP_PASSWORD,
-    "EMAIL_USE_TLS": SMTP_ENCRYPTION,
-}
+# Settings of the netbox-docker image that are not secret. The secrets come
+# from passwords.env, see the netbox-app and netbox-worker units. All the
+# containers share the pod network: services are reached on 127.0.0.1.
+agent.write_envfile("netbox-app.env", {
+    "DB_HOST": "127.0.0.1",
+    "DB_NAME": "netbox",
+    "DB_USER": "netbox",
+    "REDIS_HOST": "127.0.0.1",
+    "REDIS_PORT": "6379",
+    "REDIS_DATABASE": "0",
+    "REDIS_SSL": "false",
+    "REDIS_CACHE_HOST": "127.0.0.1",
+    "REDIS_CACHE_PORT": "6380",
+    "REDIS_CACHE_DATABASE": "1",
+    "REDIS_CACHE_SSL": "false",
+    "ALLOWED_HOSTS": "*",
+    "CSRF_TRUSTED_ORIGINS": f"https://{host}",
+    "GRAPHQL_ENABLED": "true",
+    "METRICS_ENABLED": "false",
+    "MEDIA_ROOT": "/opt/netbox/netbox/media",
+    "SKIP_SUPERUSER": "false",
+    "SUPERUSER_NAME": "admin",
+    "SUPERUSER_EMAIL": f"admin@{host}",
+    "RELEASE_CHECK_URL": "",
+    **mail,
+})
 
-# CORS_ORIGIN_ALLOW_ALL=True
-# DB_HOST=postgres
-# DB_NAME=netbox
-# DB_PASSWORD=J5brHrAXFLQSif0K
-# DB_USER=netbox
-# EMAIL_FROM=netbox@bar.com
-# EMAIL_PASSWORD=
-# EMAIL_PORT=25
-# EMAIL_SERVER=localhost
-# EMAIL_SSL_CERTFILE=
-# EMAIL_SSL_KEYFILE=
-# EMAIL_TIMEOUT=5
-# EMAIL_USERNAME=netbox
-# # EMAIL_USE_SSL and EMAIL_USE_TLS are mutually exclusive, i.e. they can't both be `true`!
-# EMAIL_USE_SSL=false
-# EMAIL_USE_TLS=false
-# GRAPHQL_ENABLED=true
-# HOUSEKEEPING_INTERVAL=86400
-# MEDIA_ROOT=/opt/netbox/netbox/media
-# METRICS_ENABLED=false
-# REDIS_CACHE_DATABASE=1
-# REDIS_CACHE_HOST=redis-cache
-# REDIS_CACHE_INSECURE_SKIP_TLS_VERIFY=false
-# REDIS_CACHE_PASSWORD=t4Ph722qJ5QHeQ1qfu36
-# REDIS_CACHE_SSL=false
-# REDIS_DATABASE=0
-# REDIS_HOST=redis
-# REDIS_INSECURE_SKIP_TLS_VERIFY=false
-# REDIS_PASSWORD=H733Kdjndks81
-# REDIS_SSL=false
-# RELEASE_CHECK_URL=https://api.github.com/repos/netbox-community/netbox/releases
-# SECRET_KEY='r(m)9nLGnz$(_q3N4z1k(EFsMCjjjzx08x9VhNVcfd%6RF#r!6DE@+V5Zk2X'
-# SKIP_SUPERUSER=true
-# WEBHOOKS_ENABLED=true
-
-
-# we write it to .config/state/netbox.env
-
-CORS_ORIGIN_ALLOW_ALL = data.get("CORS_ORIGIN_ALLOW_ALL", "True")
-
-REDIS_CACHE_DATABASE = data.get("REDIS_CACHE_DATABASE", "1")
-REDIS_CACHE_HOST = data.get("REDIS_CACHE_HOST", "redis-cache-app")
-REDIS_CACHE_INSECURE_SKIP_TLS_VERIFY = data.get("REDIS_CACHE_INSECURE_SKIP_TLS_VERIFY", "False")
-REDIS_CACHE_PASSWORD = data.get("REDIS_CACHE_PASSWORD", "t4Ph722qJ5QHeQ1qfu36")
-REDIS_CACHE_SSL = data.get("REDIS_CACHE_SSL", "False")
-
-REDIS_DATABASE = data.get("REDIS_DATABASE", "0")
-REDIS_HOST = data.get("REDIS_HOST", "redis-app")
-REDIS_INSECURE_SKIP_TLS_VERIFY = data.get("REDIS_INSECURE_SKIP_TLS_VERIFY", "False")
-REDIS_PASSWORD = data.get("REDIS_PASSWORD", "H733Kdjndks81")
-REDIS_SSL = data.get("REDIS_SSL", "False")
-
-SKIP_SUPERUSER = data.get("SKIP_SUPERUSER", "True")
-WEBHOOKS_ENABLED = data.get("WEBHOOKS_ENABLED", "True")
-SECRET_KEY = secrets.token_hex(32)
-
-net_box_config = {
-    "CORS_ORIGIN_ALLOW_ALL": CORS_ORIGIN_ALLOW_ALL,
-    "DB_HOST": POSTGRES_HOST,
-    "DB_NAME": POSTGRES_DB,
-    "DB_PASSWORD": POSTGRES_PASSWORD,
-    "DB_USER": POSTGRES_USER,
-    "EMAIL_FROM": SMTP_USERNAME,
-    "EMAIL_PASSWORD": SMTP_PASSWORD,
-    "EMAIL_PORT": SMTP_PORT,
-    "EMAIL_SERVER": SMTP_HOST,
-    "EMAIL_USERNAME": SMTP_USERNAME,
-    "EMAIL_USE_TLS": SMTP_ENCRYPTION,
-    "GRAPHQL_ENABLED": True,
-    "REDIS_CACHE_DATABASE": REDIS_CACHE_DATABASE,
-    "REDIS_CACHE_HOST": REDIS_CACHE_HOST,
-    "REDIS_CACHE_PASSWORD": REDIS_CACHE_PASSWORD,
-    "REDIS_DATABASE": REDIS_DATABASE,
-    "REDIS_HOST": REDIS_HOST,
-    "REDIS_PASSWORD": REDIS_PASSWORD,
-    "SECRET_KEY": SECRET_KEY,
-    "SKIP_SUPERUSER": SKIP_SUPERUSER,
-    "WEBHOOKS_ENABLED": WEBHOOKS_ENABLED
-}
-agent.write_envfile("netbox.env", net_box_config)
-
-agent.set_env("REDIS_CACHE_PASSWORD", REDIS_CACHE_PASSWORD)
-agent.set_env("REDIS_PASSWORD", REDIS_PASSWORD)
-
-# just before starting systemd unit
-agent.dump_env()
+agent.write_envfile("postgres.env", {
+    "POSTGRES_DB": "netbox",
+    "POSTGRES_USER": "netbox",
+    "TZ": "UTC",
+})

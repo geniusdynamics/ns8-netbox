@@ -10,8 +10,8 @@
 
 [Unit]
 Description=Podman netbox.service
-Requires=postgresql-app.service redis-app.service redis-cache-app.service netbox-app.service
-Before=postgresql-app.service redis-app.service redis-cache-app.service netbox-app.service
+Requires=postgresql-app.service redis-app.service redis-cache-app.service netbox-app.service netbox-worker.service
+Before=postgresql-app.service redis-app.service redis-cache-app.service netbox-app.service netbox-worker.service
 
 [Service]
 Environment=PODMAN_SYSTEMD_UNIT=%n
@@ -22,7 +22,7 @@ ExecStartPre=/bin/rm -f %t/netbox.pid %t/netbox.pod-id
 ExecStartPre=/usr/bin/podman pod create --infra-conmon-pidfile %t/netbox.pid \
     --pod-id-file %t/netbox.pod-id \
     --name netbox \
-    --publish 127.0.0.1:${TCP_PORT}:80 \
+    --publish 127.0.0.1:${TCP_PORT}:8080 \
     --replace
 ExecStart=/usr/bin/podman pod start --pod-id-file %t/netbox.pod-id
 ExecStop=/usr/bin/podman pod stop --ignore --pod-id-file %t/netbox.pod-id -t 10

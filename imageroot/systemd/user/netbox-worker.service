@@ -15,6 +15,8 @@ EnvironmentFile=%E/state/environment
 EnvironmentFile=%E/state/passwords.env
 WorkingDirectory=%E/state
 Restart=always
+# migrations run when netbox-app starts: retry until they are done
+RestartSec=15
 TimeoutStopSec=70
 ExecStartPre=/bin/mkdir -p config
 ExecStartPre=/bin/rm -f %t/netbox-worker.pid %t/netbox-worker.ctr-id

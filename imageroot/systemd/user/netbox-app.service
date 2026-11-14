@@ -16,6 +16,9 @@ EnvironmentFile=%E/state/passwords.env
 WorkingDirectory=%E/state
 Restart=always
 RestartSec=10
+# The first start applies all the database migrations, which takes minutes.
+# A start timeout would kill the migration halfway: keep it generous.
+TimeoutStartSec=1800
 TimeoutStopSec=70
 ExecStartPre=/bin/mkdir -p config
 ExecStartPre=/bin/rm -f %t/netbox-app.pid %t/netbox-app.ctr-id
@@ -29,10 +32,13 @@ ExecStart=/usr/bin/podman run --conmon-pidfile %t/netbox-app.pid \
     --env=SECRET_KEY=${NETBOX_SECRET_KEY} \
     --env=API_TOKEN_PEPPER_1=${NETBOX_API_TOKEN_PEPPER_1} \
     --env=SUPERUSER_PASSWORD=${NETBOX_SUPERUSER_PASSWORD} \
-    --volume netbox-media-files:/opt/netbox/netbox/media:Z \
-    --volume netbox-reports-files:/opt/netbox/netbox/reports:Z \
-    --volume netbox-scripts-files:/opt/netbox/netbox/scripts:Z \
+    --volume netbox-media-files:/opt/netbox/netbox/media:z \
+    --volume netbox-reports-files:/opt/netbox/netbox/reports:z \
+    --volume netbox-scripts-files:/opt/netbox/netbox/scripts:z \
     ${NETBOX_IMAGE}
+# Report started only when NetBox serves pages: the entrypoint runs the
+# migrations before it starts the web server. Give up if the container stops.
+ExecStartPost=/usr/bin/bash -c "until podman exec netbox-app /opt/netbox/health.sh; do podman container inspect -f '{{.State.Running}}' netbox-app | grep -q true || exit 1; sleep 5; done"
 ExecStop=/usr/bin/podman stop --ignore --cidfile %t/netbox-app.ctr-id -t 10
 ExecReload=/usr/bin/podman kill -s HUP netbox-app
 SyslogIdentifier=%u

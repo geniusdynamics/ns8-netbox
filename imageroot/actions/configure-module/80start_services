@@ -9,8 +9,10 @@ set -e
 # Redirect any output to the journal (stderr)
 exec 1>&2
 
-# If the control reaches this step, the service can be enabled and started
-
-
+# If the control reaches this step, the service can be enabled and started.
+# List every unit: restarting the pod alone does not restart its containers.
+# netbox-app reports started only when NetBox serves pages, so on the first
+# run this waits for the database migrations.
 systemctl --user enable netbox.service
-systemctl --user restart netbox.service
+systemctl --user restart netbox.service postgresql-app.service redis-app.service \
+    redis-cache-app.service netbox-app.service netbox-worker.service

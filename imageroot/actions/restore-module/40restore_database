@@ -8,9 +8,9 @@
 set -e -o pipefail
 exec 1>&2 # Redirect any output to the journal (stderr)
 
-# The backup holds passwords.env: restore the database with the same password
-# shellcheck disable=SC1091
-source passwords.env
+# The backup holds passwords.env: restore the database with the same password.
+# Do not source the file: the other secrets hold shell metacharacters.
+NETBOX_DB_PASSWORD=$(grep -m1 '^NETBOX_DB_PASSWORD=' passwords.env | cut -d= -f2-)
 printf "POSTGRES_DB=netbox\nPOSTGRES_USER=netbox\nTZ=UTC\n" > postgres.env
 
 mkdir -vp restore

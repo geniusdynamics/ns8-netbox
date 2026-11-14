@@ -1,5 +1,6 @@
 *** Settings ***
 Library    SSHLibrary
+Library    String
 
 *** Variables ***
 ${HOST}    netbox.example.org
@@ -16,11 +17,19 @@ Login to cluster-admin
     Click    button >> text="Log in"
     Wait For Elements State    css=#main-content    visible    timeout=10s
 
+NetBox login page answers through Traefik
+    # The login page answers 200 only once the migrations are done and the
+    # web server runs. 000: no answer, 404: Traefik has no route, 502: the
+    # app is not listening yet.
+    ${status} =    Execute Command    curl -k -s -o /dev/null --max-time 10 -w '\%{http_code}' --resolve ${HOST}:443:127.0.0.1 https://${HOST}/login/
+    ${status} =    Strip String    ${status}
+    Should Be Equal    ${status}    200    https://${HOST}/login/ answered HTTP ${status}
+
 *** Test Cases ***
 Check if netbox is installed correctly
     ${output}  ${rc} =    Execute Command    add-module ${IMAGE_URL} 1
     ...    return_rc=True
-    Should Be Equal As Integers    ${rc}  0
+    Should Be Equal As Integers    ${rc}  0    add-module failed: ${output}
     &{output} =    Evaluate    ${output}
     Set Global Variable    ${module_id}    ${output.module_id}
 
@@ -41,14 +50,20 @@ Take screenshots
     Close Browser
 
 Check if netbox can be configured
-    ${rc} =    Execute Command    api-cli run module/${module_id}/configure-module --data '{"host":"${HOST}","http2https":true,"lets_encrypt":false}'
-    ...    return_rc=True  return_stdout=False
-    Should Be Equal As Integers    ${rc}  0
+    # Valid against configure-module/validate-input.json
+    ${output}  ${rc} =    Execute Command    api-cli run module/${module_id}/configure-module --data '{"host":"${HOST}","http2https":true,"lets_encrypt":false}'
+    ...    return_rc=True
+    Should Be Equal As Integers    ${rc}  0    configure-module failed: ${output}
+
+Check if netbox configuration reads back
+    ${output}    ${rc} =    Execute Command    api-cli run module/${module_id}/get-configuration
+    ...    return_rc=True
+    Should Be Equal As Integers    ${rc}    0    get-configuration failed: ${output}
+    &{config} =    Evaluate    json.loads(r'''${output}''')    modules=json
+    Should Be Equal    ${config.host}    ${HOST}
 
 Check if netbox works as expected
-    ${rc} =    Execute Command    bash -c 'for i in $(seq 1 60); do curl -k -s -o /dev/null -f --resolve ${HOST}:443:127.0.0.1 https://${HOST}/ && exit 0; sleep 5; done; exit 1'
-    ...    return_rc=True  return_stdout=False
-    Should Be Equal As Integers    ${rc}  0
+    Wait Until Keyword Succeeds    15 min    10 sec    NetBox login page answers through Traefik
 
 Check if netbox is removed correctly
     ${rc} =    Execute Command    remove-module --no-preserve ${module_id}

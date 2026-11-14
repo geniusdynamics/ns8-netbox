@@ -17,6 +17,12 @@ reponame="netbox"
 # Node.js 25+ no longer ships Corepack, install it from npm
 # renovate: datasource=npm packageName=corepack
 corepack_version=0.36.0
+# renovate: datasource=docker packageName=docker.io/netboxcommunity/netbox
+NETBOX_VERSION=v4.7.5-5.1.2
+# renovate: datasource=docker packageName=docker.io/library/postgres
+POSTGRES_VERSION=18.7-alpine3.24
+# renovate: datasource=docker packageName=docker.io/library/redis
+REDIS_VERSION=8.10.3-alpine3.23
 
 # Create a new empty container image
 container=$(buildah from scratch)
@@ -49,7 +55,8 @@ buildah config --entrypoint=/ \
     --label="org.nethserver.authorizations=traefik@node:routeadm" \
     --label="org.nethserver.tcp-ports-demand=1" \
     --label="org.nethserver.rootfull=0" \
-    --label="org.nethserver.images=docker.io/postgres:16-alpine docker.io/netboxcommunity/netbox:v4.0-2.9.1 docker.io/redis:7-alpine" \
+    --label="org.nethserver.min-core=3.0.0" \
+    --label="org.nethserver.images=docker.io/postgres:${POSTGRES_VERSION} docker.io/netboxcommunity/netbox:${NETBOX_VERSION} docker.io/redis:${REDIS_VERSION}" \
     "${container}"
 # Commit the image
 buildah commit "${container}" "${repobase}/${reponame}"

@@ -11,8 +11,10 @@ After=netbox.service postgresql-app.service
 [Service]
 Environment=PODMAN_SYSTEMD_UNIT=%n
 EnvironmentFile=%E/state/environment
+EnvironmentFile=%E/state/passwords.env
 WorkingDirectory=%E/state
 Restart=always
+RestartSec=10
 TimeoutStopSec=70
 ExecStartPre=/bin/mkdir -p config
 ExecStartPre=/bin/rm -f %t/redis-cache-app.pid %t/redis-cache-app.ctr-id
@@ -20,7 +22,7 @@ ExecStart=/usr/bin/podman run --conmon-pidfile %t/redis-cache-app.pid \
     --cidfile %t/redis-cache-app.ctr-id --cgroups=no-conmon \
     --pod-id-file %t/netbox.pod-id --replace -d --name  redis-cache-app \
     --volume redis-cache-data:/data \
-    ${REDIS_IMAGE} --appendonly yes --requirepass ${REDIS_CACHE_PASSWORD}
+    ${REDIS_IMAGE} redis-server --requirepass ${NETBOX_REDIS_CACHE_PASSWORD} --bind 127.0.0.1 --port 6380
 ExecStop=/usr/bin/podman stop --ignore --cidfile %t/redis-cache-app.ctr-id -t 10
 ExecReload=/usr/bin/podman kill -s HUP redis-cache-app
 SyslogIdentifier=%u

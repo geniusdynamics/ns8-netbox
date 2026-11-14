@@ -12,4 +12,5 @@ set -e
 # Redirect any output to the journal (stderr)
 exec 1>&2
 
-systemctl --user try-restart netbox.service
+systemctl --user try-restart netbox.service postgresql-app.service redis-app.service \
+    redis-cache-app.service netbox-app.service netbox-worker.service
